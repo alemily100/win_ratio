@@ -75,3 +75,16 @@ comparison_dataset<- function(n.sample_vec, vec_dlt_rate, vec_overall_response_r
   M<- rbind(doseA, doseB)
   return(M)
 }
+
+analysis<- function(n.sample_vec, vec_dlt_rate, vec_overall_response_rate, vec_dlt_response_rate, 
+                    correlation, vec_exposure_shape, vec_exposure_rate, mat_overall_ordinal, vec_dlt_ordinal, exposure_threshold){
+  dataset<- comparison_dataset(n.sample_vec, vec_dlt_rate, vec_overall_response_rate, vec_dlt_response_rate, 
+                               correlation, vec_exposure_shape, vec_exposure_rate, mat_overall_ordinal, vec_dlt_ordinal, exposure_threshold)
+  GPC_analysis<-BuyseTest(treatment = "dose", endpoint = c("toxicity", "response", "sufficient_exposure", "ordinal"), threshold=c(NA, NA, NA, 0.1), 
+                          operator = c("<0", ">0", ">0", "<0" ),type=c("b", "b", "b", "c"), data=dataset)
+  summary<- data.frame(summary(GPC_analysis,percentage = FALSE))
+  win<-sum(summary$favorable)
+  loss<-sum(summary$unfavorable)
+  tie<-sum(summary$neutral[length(summary$neutral)])
+  return(c(win, loss, tie))
+} 

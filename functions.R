@@ -80,11 +80,28 @@ analysis<- function(n.sample_vec, vec_dlt_rate, vec_overall_response_rate, vec_d
                     correlation, vec_exposure_shape, vec_exposure_rate, mat_overall_ordinal, vec_dlt_ordinal, exposure_threshold){
   dataset<- comparison_dataset(n.sample_vec, vec_dlt_rate, vec_overall_response_rate, vec_dlt_response_rate, 
                                correlation, vec_exposure_shape, vec_exposure_rate, mat_overall_ordinal, vec_dlt_ordinal, exposure_threshold)
-  GPC_analysis<-BuyseTest(treatment = "dose", endpoint = c("toxicity", "response", "sufficient_exposure", "ordinal"), threshold=c(NA, NA, NA, 0.1), 
+  GPC_analysis_4<-BuyseTest(treatment = "dose", endpoint = c("toxicity", "response", "sufficient_exposure", "ordinal"), threshold=c(NA, NA, NA, 0.1), 
                           operator = c("<0", ">0", ">0", "<0" ),type=c("b", "b", "b", "c"), data=dataset)
-  summary<- data.frame(summary(GPC_analysis,percentage = FALSE))
-  win<-sum(summary$favorable)
-  loss<-sum(summary$unfavorable)
-  tie<-sum(summary$neutral[length(summary$neutral)])
-  return(c(win, loss, tie))
+  summary_4<- data.frame(summary(GPC_analysis_4,percentage = FALSE))
+  win_4<-sum(summary_4$favorable)
+  loss_4<-sum(summary_4$unfavorable)
+  tie_4<-sum(summary_4$neutral[length(summary_4$neutral)])
+  
+  dataset_utility<-data.frame(dataset)%>%
+    mutate(utility = case_when(
+      toxicity == 1 & response == 0 ~ 0,
+      toxicity == 0 & response == 0 ~ 30,
+      toxicity == 1 & response == 1 ~ 50,
+      toxicity == 0 & response == 1 ~ 100
+    ))
+  
+  GPC_analysis_utility<-BuyseTest(treatment = "dose", endpoint = c("utility", "sufficient_exposure", "ordinal"), threshold=c(0.1, NA, 0.1), 
+                                  operator = c(">0", ">0", "<0" ),type=c("c", "b", "c"), data=dataset_utility)
+  
+  summary_utility<- data.frame(summary(GPC_analysis_utility,percentage = FALSE))
+  win_utility<-sum(summary_utility$favorable)
+  loss_utility<-sum(summary_utility$unfavorable)
+  tie_utility<-sum(summary_utility$neutral[length(summary_utility$neutral)])
+  
+  return(list(four = c(win_4, loss_4, tie_4), utility = c(win_utility, loss_utility, tie_utility)))
 } 

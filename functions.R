@@ -2,21 +2,22 @@ library(MASS)
 library(tidyverse)
 library(BuyseTest)
 
-exposure_fact<- function(n.sample, correlation, exposure_shape, exposure_rate, fact_threshold, exposure_threshold){
-  M<- matrix(nrow=n.sample, ncol=2)
-  gauss<-mvrnorm(n.sample, rep(0, times=2), Sigma=matrix(c(1, correlation,correlation, 1), nrow=2))
+exposure_fact<- function(n.sample, correlation_pro_exp,correlation_pro_dlt ,exposure_shape, exposure_rate, fact_threshold, exposure_threshold, dlt_rate){
+  M<- matrix(nrow=n.sample, ncol=3)
+  gauss<-mvrnorm(n.sample, rep(0, times=3), Sigma=matrix(c(1, correlation_pro_exp,0,correlation_pro_exp, 1,correlation_pro_dlt,0,correlation_pro_dlt,1), nrow=3))
   exposure<-qbeta(pnorm(gauss[,1]), exposure_shape, exposure_rate)
   scores<-pnorm(gauss[,2])
+  dlt<- pnorm(gauss[,3])
   ordinal<-findInterval(scores, fact_threshold, rightmost.closed = TRUE, all.inside = TRUE)
-  M[,1]<- ifelse(exposure<=exposure_threshold, 0, 1)
-  M[,2]<- ordinal
-  colnames(M)<- c("sufficient_exposure", "ordinal")
+  dlt_obs<-findInterval(dlt, c(0, 1-dlt_rate, 1), rightmost.closed = TRUE, all.inside = TRUE)-1
+  M[,1]<- dlt_obs
+  M[,2]<- ifelse(exposure<=exposure_threshold, 0, 1)
+  M[,3]<- ordinal
+  colnames(M)<- c("dlt", "sufficient_exposure", "ordinal")
   return(M)
 }
 
-dlt<- function(n.sample, dlt_rate){
-  return(rbinom(n.sample, 1, dlt_rate))
-}
+
 
 prob_no_dlt<- function(overall_prob, prob_for_dlt, dlt_rate){
   val<- (overall_prob - (prob_for_dlt*dlt_rate))/(1-dlt_rate)

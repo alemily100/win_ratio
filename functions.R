@@ -1,6 +1,11 @@
 library(MASS)
 library(tidyverse)
 library(BuyseTest)
+library(ggplot2)
+library(dplyr)
+library(gridExtra)
+library(grid)
+library(cowplot)
 
 dlt_exposure_fact<- function(n.sample, correlation_pro_exp,correlation_pro_dlt ,exposure_shape, exposure_rate, fact_threshold, exposure_threshold, dlt_rate){
   M<- matrix(nrow=n.sample, ncol=3)

@@ -51,7 +51,7 @@ empirical<- df%>%group_by(type)%>%summarise(mean(value<=1))
 
 colnames(empirical)<- c("Num_endpoints", "prob_dose_a")
 empirical[1,1]<- "Four"
-empirical[3,1]<- "Three \n (Toxicity+Efficacy Utility)"
+empirical[2,1]<- "Three \n (Toxicity+Efficacy Utility)"
 # Plot densities
 density<-ggplot(df, aes(x = value, color = type)) +
   geom_density(size = 1.2) +  # Density lines

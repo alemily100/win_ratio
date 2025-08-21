@@ -77,7 +77,7 @@ analysis<- function(n.sample_vec, vec_dlt_rate, vec_overall_response_rate, vec_d
     mutate(utility = case_when(
       dlt == 1 & response == 0 ~ 0,
       dlt == 0 & response == 0 ~ 30,
-      dlt == 1 & response == 1 ~ 50,
+      dlt == 1 & response == 1 ~ 60,
       dlt == 0 & response == 1 ~ 100
     ))
 

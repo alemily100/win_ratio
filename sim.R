@@ -13,6 +13,7 @@ correlation_pro_dlt<- 0.5
 vec_exposure_shape<- c(9,9)
 vec_exposure_rate<- c(1,2)
 mat_fact<- matrix(c(0.059, 0.029, 0.265, 0.382, 0.265, 0.059, 0.029, 0.265, 0.382, 0.265), nrow=2, byrow=TRUE) 
+
 exposure_threshold<- 0.8
 
 #expected utility
@@ -50,7 +51,7 @@ empirical<- df%>%group_by(type)%>%summarise(mean(value<=1))
 
 colnames(empirical)<- c("Num_endpoints", "prob_dose_a")
 empirical[1,1]<- "Four"
-empirical[2,1]<- "Three \n (Toxicity+Efficacy Utility)"
+empirical[3,1]<- "Three \n (Toxicity+Efficacy Utility)"
 # Plot densities
 density<-ggplot(df, aes(x = value, color = type)) +
   geom_density(size = 1.2) +  # Density lines
@@ -72,7 +73,7 @@ density<-ggplot(df, aes(x = value, color = type)) +
   annotate("text", x = 1.5, y = -0.08, label = "Dose B has more winners", hjust = 0.5)+ expand_limits(y = -0.3)
 density
 
-table_grob <- tableGrob(empirical, rows = NULL, theme=white_theme)
+#table_grob <- tableGrob(empirical, rows = NULL, theme=white_theme)
 
 # Add table inside the plot
 
@@ -151,6 +152,6 @@ p <- ggplot() + xlim(0, 4) + ylim(0, 4) + theme_void()
 fig2<- p + annotation_custom(table1, xmin = 1.5, xmax = 3, ymin = 2.5, ymax = 4)+
   annotation_custom(table2, xmin = 1.5, xmax = 3, ymin = 0.5, ymax = 2)
 
-pdf("scenario3.pdf", width=15, height=5)
+#pdf("scenario4_diff.pdf", width=15, height=5)
 plot_grid(fig2, density, ncol = 2, rel_widths = c(1, 1.5))  
-dev.off()
+#dev.off()

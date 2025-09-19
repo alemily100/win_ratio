@@ -1,5 +1,6 @@
 setwd("C:/Users/ealger/OneDrive - The Institute of Cancer Research/M/PhD/Trial Designs/win_ratio")
 source("functions.R")
+source("figure_sourcefile.R")
 set.seed(11600)
 
 n.sim<-1000
@@ -67,7 +68,7 @@ density
 
 df_sum <- data.frame(
   dose = c("Dose A", "Dose B"),
-  prob_no_DLT = round(1-vec_dlt_rate,2),
+  prob_no_DLT = round(vec_dlt_rate,2),
   prob_response = round(overall_efficacy,2),
   prob_inten = round(c(1-pbeta(0.8, vec_exposure_shape[1], vec_exposure_rate[1]),
                                            1-pbeta(0.8, vec_exposure_shape[2], vec_exposure_rate[2])),2),
@@ -83,27 +84,10 @@ df_sum_tidy <- df_sum %>%
   pivot_wider(names_from = dose, values_from = Value)
 
 
-highlight_cells <- function(df, small_better_rows = NULL, color = "lightgreen", skip_bottom_n = 3) {
-  n_rows <- nrow(df)
-  n_cols <- ncol(df)
-  
-  bg <- matrix("white", nrow = n_rows, ncol = n_cols)
-  for (i in 1:n_rows) {
-    if (i > (n_rows - skip_bottom_n)) next
-    if (i %in% small_better_rows) {
-      j <- which.min(df[i, ])
-    } else {
-      j <- which.max(df[i, ])
-    }
-    bg[i, j] <- color
-  }
-  return(bg)
-}
 
 
-bg_table1 <- highlight_cells(df_sum_tidy[,-1], small_better_rows = 4)
+bg_table1 <- highlight_cells(df_sum_tidy[,-1], small_better_rows = c(1,4))
 
-border_colors <- c("black", "black", "black", "black", "red3", "darkgoldenrod3", "steelblue3")
 
 # Expand to a matrix to match table shape
 border_matrix <- matrix(rep(border_colors, each = 2), nrow = 7, ncol = 2, byrow = TRUE)
@@ -120,8 +104,8 @@ for (i in 5:7) {
 blue_theme <- ttheme_default(
   core = list(fg_params = list(
     fontface =as.vector(fontface_matrix)),
-  bg_params = list(fill=as.vector(bg_table1),  
-                   col = as.vector(border_matrix),lwd  = as.vector(lwd_matrix))),
+    bg_params = list(fill=as.vector(bg_table1),  
+                     col = as.vector(border_matrix),lwd  = as.vector(lwd_matrix))),
   #,colhead = list(bg_params = list(fill = "blue", col = NA))
   colhead = list(
     fg_params = list(fontface = "bold"),         # bold headers
@@ -129,13 +113,11 @@ blue_theme <- ttheme_default(
   )
 )
 
-
-table1 <- tableGrob(df_sum_tidy[,-1], rows = c("(1) DLT rate", "(2) Response rate", "(3a) Sufficient intensity rate", "(3b) Expected symptom bother", expression(atop(bold("Rank prioritising DLTs"), "Probability dose selected `best`:")),
-                                               expression(atop(bold("Rank with intermediate ties"), "Probability dose selected `best`:")), expression(atop(bold("Rank prioritising response"), "Probability dose selected `best`:"))),theme = blue_theme)
+table1 <- tableGrob(df_sum_tidy[,-1], rows = c("(1) DLT rate", "(2) Response rate", "(3a) Sufficient intensity rate", "(3b) Expected symptom bother", expression(atop(bold("Rank prioritising DLTs:"), "Probability dose selected `best`:")),
+                                               expression(atop(bold("Rank with intermediate ties:"), "Probability dose selected `best`:")), expression(atop(bold("Rank prioritising response:"), "Probability dose selected `best`:"))),theme = blue_theme)
 
 p <- ggplot() + xlim(0, 4) + ylim(0, 4) + theme_void()
 fig2<- p + annotation_custom(table1, xmin = 0, xmax = 4, ymin = 0, ymax = 4)
-
 #pdf("scenario4_diff.pdf", width=15, height=5)
 plot_grid(fig2, density, ncol = 2, rel_widths = c(1, 1.5))  
 #dev.off()

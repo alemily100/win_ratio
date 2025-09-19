@@ -11,16 +11,16 @@ correlation_pro_dlt<- 0.5
 exposure_threshold<- 0.8
 
 #vary across simulations 
-mat_dlt_rate<-t(matrix(c(0.27,0.42,0.27,0.27,0.27,0.27,0.2,0.45), nrow=2))
-mat_efficacy_rate<-t(matrix(c(0.38, 0.38, 0.38, 0.60, 0.38, 0.38, 0.2, 0.6), nrow=2))
-mat_dlt_efficacy<-t(matrix(c(0.3, 0.3, 0.3, 0.5, 0.3, 0.3, 0.1, 0.5), nrow=2))
+mat_dlt_rate<-t(matrix(c(0.27,0.42,0.27,0.27,0.2,0.45, 0.27, 0.27), nrow=2))
+mat_efficacy_rate<-t(matrix(c(0.38, 0.38, 0.38, 0.60, 0.2, 0.6, 0.38, 0.38), nrow=2))
+mat_dlt_efficacy<-t(matrix(c(0.3, 0.3, 0.3, 0.5, 0.1, 0.5, 0.3, 0.3), nrow=2))
 mat_exposure_shape<- t(matrix(rep(9, times=8), nrow=2))
-mat_exposure_rate<-t(matrix(c(1,2,1,1,1,1,1,2), nrow=2))
+mat_exposure_rate<-t(matrix(c(1,2,1,1,1,2,1,2), nrow=2))
 pro_scenario <- list()
 pro_scenario[[1]]<-matrix(c(0.16, 0.23, 0.37, 0.18, 0.07, 0.059, 0.029, 0.265, 0.382, 0.265), nrow=2, byrow=TRUE) 
 pro_scenario[[2]]<-matrix(c(0.059, 0.029, 0.265, 0.382, 0.265, 0.059, 0.029, 0.265, 0.382, 0.265), nrow=2, byrow=TRUE) 
 pro_scenario[[3]]<-matrix(c(0.059, 0.029, 0.265, 0.382, 0.265, 0.059, 0.029, 0.265, 0.382, 0.265), nrow=2, byrow=TRUE) 
-pro_scenario[[4]]<-matrix(c(0.059, 0.029, 0.265, 0.382, 0.265, 0.059, 0.029, 0.265, 0.382, 0.265), nrow=2, byrow=TRUE) 
+pro_scenario[[4]]<-matrix(c(0.16, 0.23, 0.37, 0.18, 0.07, 0.059, 0.029, 0.265, 0.382, 0.265), nrow=2, byrow=TRUE) 
 fact_score <- abind(pro_scenario, along = 3)
 
 

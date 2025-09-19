@@ -180,6 +180,6 @@ print(fig)
 assign(paste0("figure", i), fig)
 }
 
-pdf(file.path(paste0("figures"), paste0("simulation_figure.pdf")), width=10, height=15)
-print(plot_grid(figure4, figure4, figure4, figure4, ncol = 1))
+pdf(file.path(paste0("figures"), paste0("simulation_figure.pdf")), width=10, height=18)
+print(plot_grid(figure1, figure2, figure3, figure4, ncol = 1))
 dev.off()

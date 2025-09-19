@@ -99,13 +99,13 @@ density<-ggplot(df, aes(x = value, color = type)) +
     legend.position = "none",
     legend.background = element_rect(fill = alpha("white", 0.6)),  # semi-transparent background
     legend.title = element_text(face = "bold")
-  )+
+  )+coord_cartesian(clip = "off")+
   annotate("segment", x = 1, xend = 0, y = -0.15, yend = -0.15,
            arrow = arrow(length = unit(0.2, "cm")), color = "black") +
-  annotate("text", x = 0.5, y = -0.08, label = "Win ratio favors Dose A", hjust = 0.5) +
+  annotate("text", x = 0.2, y = -0.08, label = "Win ratio favors Dose A", hjust = 0.5) +
   annotate("segment", x = 1, xend = 4, y = -0.15, yend = -0.15,
            arrow = arrow(length = unit(0.2, "cm")), color = "black") +
-  annotate("text", x = 1.5, y = -0.08, label = "Win ratio favors Dose B", hjust = 0.5)+ expand_limits(y = -0.3)
+  annotate("text", x = 1.8, y = -0.08, label = "Win ratio favors Dose B", hjust = 0.5)+ expand_limits(y = -0.3)
 density
 
 df_sum <- data.frame(
@@ -159,11 +159,27 @@ table1 <- tableGrob(df_sum_tidy[,-1], rows = c("(1) DLT rate", "(2) Response rat
                                                expression(atop(bold("Rank with intermediate ties:"), "Probability dose selected `best`:")), expression(atop(bold("Rank prioritising response:"), "Probability dose selected `best`:"))),theme = blue_theme)
 
 p <- ggplot() + xlim(0, 4) + ylim(0, 4) + theme_void()
-fig2<- p + annotation_custom(table1, xmin = 0, xmax = 4, ymin = 0, ymax = 4)
-pdf(file.path(paste0("sim_results/scenario", i), paste0("plot_scenario", i, ".pdf")), width=15, height=5)
+fig2<- p + annotation_custom(table1, xmin = 0, xmax = 4, ymin = 0, ymax = 4) +ggtitle(paste0("Scenario ",i))+
+  theme(
+    plot.title = element_text(
+      hjust = 0.2,     
+      vjust = 1,       
+      size = 16,
+      face = "bold"
+    ),
+    plot.margin = unit(c(2, 1, 1, 1), "cm")
+  )
+fig2
+fig<-plot_grid(fig2, density, ncol = 2, rel_widths = c(1, 1.3))
+pdf(file.path(paste0("sim_results/scenario", i), paste0("plot_scenario", i, ".pdf")), width=10, height=5)
 tryCatch({
-print(plot_grid(fig2, density, ncol = 2, rel_widths = c(1, 1.5)))  
+print(fig)  
 }, finally = {
   dev.off()
 })
+assign(paste0("figure", i), fig)
 }
+
+pdf(file.path(paste0("figures"), paste0("simulation_figure.pdf")), width=10, height=15)
+print(plot_grid(figure4, figure4, figure4, figure4, ncol = 1))
+dev.off()

@@ -102,10 +102,10 @@ density<-ggplot(df, aes(x = value, color = type)) +
   )+coord_cartesian(clip = "off")+
   annotate("segment", x = 1, xend = 0, y = -0.15, yend = -0.15,
            arrow = arrow(length = unit(0.2, "cm")), color = "black") +
-  annotate("text", x = 0.2, y = -0.08, label = "Win ratio favors Dose A", hjust = 0.5) +
+  annotate("text", x = 0.2, y = -0.08, label = "Win ratio favours Dose A", hjust = 0.5) +
   annotate("segment", x = 1, xend = 4, y = -0.15, yend = -0.15,
            arrow = arrow(length = unit(0.2, "cm")), color = "black") +
-  annotate("text", x = 1.8, y = -0.08, label = "Win ratio favors Dose B", hjust = 0.5)+ expand_limits(y = -0.3)
+  annotate("text", x = 1.8, y = -0.08, label = "Win ratio favours Dose B", hjust = 0.5)+ expand_limits(y = -0.3)
 density
 
 df_sum <- data.frame(

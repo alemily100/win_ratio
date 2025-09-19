@@ -1,4 +1,4 @@
-highlight_cells <- function(df, skip_bottom_n = 0, small_better_rows = integer(0), color = "lightgreen") {
+highlight_cells <- function(df, skip_bottom_n = 3, small_better_rows = integer(0), color = "lightgreen") {
   n_rows <- nrow(df)
   n_cols <- ncol(df)
   bg <- matrix("white", nrow = n_rows, ncol = n_cols)

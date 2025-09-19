@@ -169,7 +169,6 @@ fig2<- p + annotation_custom(table1, xmin = 0, xmax = 4, ymin = 0, ymax = 4) +gg
     ),
     plot.margin = unit(c(2, 1, 1, 1), "cm")
   )
-fig2
 fig<-plot_grid(fig2, density, ncol = 2, rel_widths = c(1, 1.3))
 pdf(file.path(paste0("sim_results/scenario", i), paste0("plot_scenario", i, ".pdf")), width=10, height=5)
 tryCatch({

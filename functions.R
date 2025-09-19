@@ -66,13 +66,6 @@ analysis<- function(n.sample_vec, vec_dlt_rate, vec_overall_response_rate, vec_d
                     correlation_pro_exp, correlation_pro_dlt, vec_exposure_shape, vec_exposure_rate, mat_fact, exposure_threshold){
   dataset<- comparison_dataset(n.sample_vec, vec_dlt_rate, vec_overall_response_rate, vec_dlt_response_rate, 
                                correlation_pro_exp, correlation_pro_dlt, vec_exposure_shape, vec_exposure_rate, mat_fact, exposure_threshold)
-  GPC_analysis_4<-BuyseTest(treatment = "dose", endpoint = c("dlt", "response", "sufficient_exposure", "ordinal"), threshold=c(NA, NA, NA, 0.1),
-                          operator = c("<0", ">0", ">0", "<0" ),type=c("b", "b", "b", "c"), data=dataset)
-  summary_4<- data.frame(summary(GPC_analysis_4,percentage = FALSE))
-  win_4<-sum(summary_4$favorable)
-  loss_4<-sum(summary_4$unfavorable)
-  tie_4<-sum(summary_4$neutral[length(summary_4$neutral)])
-
   dataset_utility<-data.frame(dataset)%>%
     mutate(utility = case_when(
       dlt == 1 & response == 0 ~ 0,
@@ -80,13 +73,40 @@ analysis<- function(n.sample_vec, vec_dlt_rate, vec_overall_response_rate, vec_d
       dlt == 1 & response == 1 ~ 60,
       dlt == 0 & response == 1 ~ 100
     ))
-
-  GPC_analysis_utility<-BuyseTest(treatment = "dose", endpoint = c("utility", "sufficient_exposure", "ordinal"), threshold=c(0.1, NA, 0.1),
+  GPC_analysis_response<-BuyseTest(treatment = "dose", endpoint = c("utility", "sufficient_exposure", "ordinal"), threshold=c(0.1, NA, 0.1),
                                   operator = c(">0", ">0", "<0" ),type=c("c", "b", "c"), data=dataset_utility)
+  summary_response<- data.frame(summary(GPC_analysis_response,percentage = FALSE))
+  win_response<-sum(summary_response$favorable)
+  loss_response<-sum(summary_response$unfavorable)
+  tie_response<-sum(summary_response$neutral[length(summary_response$neutral)])
+  
+  dataset_utility<-data.frame(dataset)%>%
+    mutate(utility = case_when(
+      dlt == 1 & response == 0 ~ 0,
+      dlt == 0 & response == 0 ~ 60,
+      dlt == 1 & response == 1 ~ 30,
+      dlt == 0 & response == 1 ~ 100
+    ))
+  GPC_analysis_dlt<-BuyseTest(treatment = "dose", endpoint = c("utility", "sufficient_exposure", "ordinal"), threshold=c(0.1, NA, 0.1),
+                                   operator = c(">0", ">0", "<0" ),type=c("c", "b", "c"), data=dataset_utility)
+  summary_dlt<- data.frame(summary(GPC_analysis_dlt,percentage = FALSE))
+  win_dlt<-sum(summary_dlt$favorable)
+  loss_dlt<-sum(summary_dlt$unfavorable)
+  tie_dlt<-sum(summary_dlt$neutral[length(summary_dlt$neutral)])
+  
+  dataset_utility<-data.frame(dataset)%>%
+    mutate(utility = case_when(
+      dlt == 1 & response == 0 ~ 0,
+      dlt == 0 & response == 0 ~ 50,
+      dlt == 1 & response == 1 ~ 50,
+      dlt == 0 & response == 1 ~ 100
+    ))
+  GPC_analysis_tie<-BuyseTest(treatment = "dose", endpoint = c("utility", "sufficient_exposure", "ordinal"), threshold=c(0.1, NA, 0.1),
+                              operator = c(">0", ">0", "<0" ),type=c("c", "b", "c"), data=dataset_utility)
+  summary_tie<- data.frame(summary(GPC_analysis_tie,percentage = FALSE))
+  win_tie<-sum(summary_tie$favorable)
+  loss_tie<-sum(summary_tie$unfavorable)
+  tie_tie<-sum(summary_tie$neutral[length(summary_tie$neutral)])
 
-  summary_utility<- data.frame(summary(GPC_analysis_utility,percentage = FALSE))
-  win_utility<-sum(summary_utility$favorable)
-  loss_utility<-sum(summary_utility$unfavorable)
-  tie_utility<-sum(summary_utility$neutral[length(summary_utility$neutral)])
-  return(list(four = c(win_4, loss_4, tie_4), utility = c(win_utility, loss_utility, tie_utility)))
+  return(list(response = c(win_response, loss_response, tie_response), dlt = c(win_dlt, loss_dlt, tie_dlt), tie = c(win_tie, loss_tie, tie_tie)))
 } 

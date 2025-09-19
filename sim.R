@@ -16,50 +16,42 @@ mat_fact<- matrix(c(0.059, 0.029, 0.265, 0.382, 0.265, 0.059, 0.029, 0.265, 0.38
 
 exposure_threshold<- 0.8
 
-#expected utility
-M<-comparison_dataset(c(1000,1000), vec_dlt_rate, overall_efficacy, dlt_efficacy, 
-                              correlation_pro_exp, correlation_pro_dlt, vec_exposure_shape, vec_exposure_rate, mat_fact, exposure_threshold)
-M<-data.frame(M)%>%
-  mutate(utility = case_when(
-    dlt == 1 & response == 0 ~ 0,
-    dlt == 0 & response == 0 ~ 30,
-    dlt == 1 & response == 1 ~ 50,
-    dlt == 0 & response == 1 ~ 100
-  ))
-utility_vals<-M %>% group_by(dose) %>% summarise(mean = mean(utility))
-
 test<-replicate(n.sim,
   analysis(n.sample_vec, vec_dlt_rate, overall_efficacy, dlt_efficacy , correlation_pro_exp, correlation_pro_dlt,
            vec_exposure_shape, vec_exposure_rate, mat_fact,  exposure_threshold),
   simplify = FALSE)
 
-four_endpoints <- do.call(rbind, lapply(test, `[[`, "four"))
-utility_endpoints <- do.call(rbind, lapply(test, `[[`, "utility"))
+response_priority <- do.call(rbind, lapply(test, `[[`, "response"))
+dlt_priority <- do.call(rbind, lapply(test, `[[`, "dlt"))
+tie_priority <- do.call(rbind, lapply(test, `[[`, "tie"))
 
-wr_four<-sapply(1:n.sim, function (k) four_endpoints[k,1]/four_endpoints[k,2])
-wr_utility<-sapply(1:n.sim, function (k) utility_endpoints[k,1]/utility_endpoints[k,2])
+wr_response_priority<-sapply(1:n.sim, function (k) response_priority[k,1]/response_priority[k,2])
+wr_dlt_priority<-sapply(1:n.sim, function (k) dlt_priority[k,1]/dlt_priority[k,2])
+wr_tie_priority<-sapply(1:n.sim, function (k) tie_priority[k,1]/tie_priority[k,2])
 
 
 
 #######CREATE FIGURE ########
 df <- bind_rows(
-  data.frame(value = wr_four, type = "wr_four"),
-  data.frame(value = wr_utility, type = "wr_utility")
+  data.frame(value = wr_response_priority, type = "response_priority"),
+  data.frame(value = wr_dlt_priority, type = "dlt_priority"),
+  data.frame(value = wr_tie_priority, type = "tie_priority"),
 )
 
 empirical<- df%>%group_by(type)%>%summarise(mean(value<=1))
 
-colnames(empirical)<- c("Num_endpoints", "prob_dose_a")
-empirical[1,1]<- "Four"
-empirical[2,1]<- "Three \n (Toxicity+Efficacy Utility)"
+colnames(empirical)<- c("priority", "prob_dose_a")
+empirical[1,1]<- "dlt"
+empirical[2,1]<- "response"
+empirical[3,1]<- "tie"
 # Plot densities
 density<-ggplot(df, aes(x = value, color = type)) +
   geom_density(size = 1.2) +  # Density lines
   xlim(0, 4) +
-  labs(title = " ", x = "Win Ratio", y = "Density", colour="Number of endpoints") +
+  labs(title = " ", x = "Win Ratio", y = "Density", colour="Rank") +
   theme_minimal() +
   geom_vline(xintercept = 1, linetype = "dotted", color = "black", size = 0.8)+
-  scale_color_manual(values = c("wr_four" = "blue", "wr_utility" = "red"))+
+  scale_color_manual(values = c("response_priority" = "steelblue3", "dlt_priority" = "red3", "tie_priority"="darkgoldenrod2"))+
   theme(
     legend.position = "none",
     legend.background = element_rect(fill = alpha("white", 0.6)),  # semi-transparent background
@@ -67,16 +59,11 @@ density<-ggplot(df, aes(x = value, color = type)) +
   )+
   annotate("segment", x = 1, xend = 0, y = -0.15, yend = -0.15,
            arrow = arrow(length = unit(0.2, "cm")), color = "black") +
-  annotate("text", x = 0.5, y = -0.08, label = "Dose A has more winners", hjust = 0.5) +
+  annotate("text", x = 0.5, y = -0.08, label = "Win ratio favors Dose A", hjust = 0.5) +
   annotate("segment", x = 1, xend = 4, y = -0.15, yend = -0.15,
            arrow = arrow(length = unit(0.2, "cm")), color = "black") +
-  annotate("text", x = 1.5, y = -0.08, label = "Dose B has more winners", hjust = 0.5)+ expand_limits(y = -0.3)
+  annotate("text", x = 1.5, y = -0.08, label = "Win ratio favors Dose B", hjust = 0.5)+ expand_limits(y = -0.3)
 density
-
-#table_grob <- tableGrob(empirical, rows = NULL, theme=white_theme)
-
-# Add table inside the plot
-
 
 df_sum <- data.frame(
   dose = c("Dose A", "Dose B"),
@@ -85,72 +72,69 @@ df_sum <- data.frame(
   prob_inten = round(c(1-pbeta(0.8, vec_exposure_shape[1], vec_exposure_rate[1]),
                                            1-pbeta(0.8, vec_exposure_shape[2], vec_exposure_rate[2])),2),
   exp_fact = round(c(sum(mat_fact[1,]*(1:5)), sum(mat_fact[2,]*(1:5))),2),
-  emp = c(empirical$prob_dose_a[1], 1-empirical$prob_dose_a[1])
+  dlt = c(empirical$prob_dose_a[1], 1-empirical$prob_dose_a[1]),
+  tie = c(empirical$prob_dose_a[3], 1-empirical$prob_dose_a[3]),
+  response = c(empirical$prob_dose_a[2], 1-empirical$prob_dose_a[2])
 )
 
-df_utility <- data.frame(
-  dose = c("Dose A", "Dose B"),
-  utility = round(utility_vals[,2]$mean,2),
-  prob_inten = round(c(1-pbeta(0.8, vec_exposure_shape[1], vec_exposure_rate[1]),
-                 1-pbeta(0.8, vec_exposure_shape[2], vec_exposure_rate[2])),2),
-  exp_fact = round(c(sum(mat_fact[1,]*(1:5)), sum(mat_fact[2,]*(1:5))),2),
-  emp = c(empirical$prob_dose_a[2], 1-empirical$prob_dose_a[2])
-)
 
 df_sum_tidy <- df_sum %>%
   pivot_longer(-dose, names_to = "Metric", values_to = "Value") %>%
   pivot_wider(names_from = dose, values_from = Value)
 
-# Flip df_utility
-df_utility_tidy <- df_utility %>%
-  pivot_longer(-dose, names_to = "Metric", values_to = "Value") %>%
-  pivot_wider(names_from = dose, values_from = Value)
 
-# highlight_lower <- function(df) {
-#   apply(df, 1, function(row) {
-#     ifelse(row == max(row), "lightgreen", "white")
-#   })
-# }
-
-highlight_cells <- function(df, small_better_rows = NULL, color = "lightgreen") {
-  apply(df, 1, function(row) row) -> bg  # placeholder
-  bg <- t(sapply(1:nrow(df), function(i) {
+highlight_cells <- function(df, small_better_rows = NULL, color = "lightgreen", skip_bottom_n = 3) {
+  n_rows <- nrow(df)
+  n_cols <- ncol(df)
+  
+  bg <- matrix("white", nrow = n_rows, ncol = n_cols)
+  for (i in 1:n_rows) {
+    if (i > (n_rows - skip_bottom_n)) next
     if (i %in% small_better_rows) {
-      ifelse(df[i, ] == min(df[i, ]), color, "white")   # smaller is better
+      j <- which.min(df[i, ])
     } else {
-      ifelse(df[i, ] == max(df[i, ]), color, "white")   # larger is better
+      j <- which.max(df[i, ])
     }
-  }))
-  bg
+    bg[i, j] <- color
+  }
+  return(bg)
 }
 
+
 bg_table1 <- highlight_cells(df_sum_tidy[,-1], small_better_rows = 4)
-bg_table2 <- highlight_cells(df_utility_tidy[,-1], small_better_rows = 3)
 
+border_colors <- c("black", "black", "black", "black", "red3", "darkgoldenrod3", "steelblue3")
 
-red_theme <- ttheme_default(
-  core = list(fg_params = list(
-    fontface = rep(c("plain", "plain", "plain","bold"), times = ncol(df_sum_tidy[,-1]))
-  ),
-  bg_params = list(fill=as.vector(bg_table2),  col = "black")),
-  colhead = list(bg_params = list(fill = "red", col = NA))
-)
+# Expand to a matrix to match table shape
+border_matrix <- matrix(rep(border_colors, each = 2), nrow = 7, ncol = 2, byrow = TRUE)
+
+lwd_matrix <- matrix(1, nrow = 7, ncol = 2)
+lwd_matrix[5:7, ] <- 4
+
+fontface_matrix <- matrix("plain", nrow = 7, ncol = 2)
+for (i in 5:7) {
+  j <- which.max(df_sum_tidy[i, -1])  # column with largest value
+  fontface_matrix[i, j] <- "bold"
+}
 
 blue_theme <- ttheme_default(
   core = list(fg_params = list(
-    fontface = rep(c("plain", "plain", "plain", "plain", "bold"), times = ncol(df_sum_tidy[,-1]))
-  ),
-  bg_params = list(fill=as.vector(bg_table1),  col = "black")),
-  colhead = list(bg_params = list(fill = "blue", col = NA))
+    fontface =as.vector(fontface_matrix)),
+  bg_params = list(fill=as.vector(bg_table1),  
+                   col = as.vector(border_matrix),lwd  = as.vector(lwd_matrix))),
+  #,colhead = list(bg_params = list(fill = "blue", col = NA))
+  colhead = list(
+    fg_params = list(fontface = "bold"),         # bold headers
+    bg_params = list(fill = "white", col = "white")  # white fill + black border
+  )
 )
 
 
-table1 <- tableGrob(df_sum_tidy[,-1], rows = c("(1) Prob no DLT", "(2) Prob response", "(3) Prob sufficient intensity", "(4) Expected FACT-GP5 (larger is worse)", "Probability dose selected `best`"),theme = blue_theme)
-table2 <- tableGrob(df_utility_tidy[,-1], rows = c("(1) Utility", "(2) Prob sufficient intensity", "(3) Expected FACT-GP5 (larger is worse)", "Probability dose selected `best`"), theme= red_theme)
+table1 <- tableGrob(df_sum_tidy[,-1], rows = c("(1) DLT rate", "(2) Response rate", "(3a) Sufficient intensity rate", "(3b) Expected symptom bother", expression(atop(bold("Rank prioritising DLTs"), "Probability dose selected `best`:")),
+                                               expression(atop(bold("Rank with intermediate ties"), "Probability dose selected `best`:")), expression(atop(bold("Rank prioritising response"), "Probability dose selected `best`:"))),theme = blue_theme)
 
 p <- ggplot() + xlim(0, 4) + ylim(0, 4) + theme_void()
-fig2<- p + annotation_custom(table1, xmin = 1.5, xmax = 3, ymin = 2.5, ymax = 4)+
-  annotation_custom(table2, xmin = 1.5, xmax = 3, ymin = 0.5, ymax = 2)
+fig2<- p + annotation_custom(table1, xmin = 0, xmax = 4, ymin = 0, ymax = 4)
 
 #pdf("scenario4_diff.pdf", width=15, height=5)
 plot_grid(fig2, density, ncol = 2, rel_widths = c(1, 1.5))  

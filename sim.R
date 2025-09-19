@@ -3,34 +3,76 @@ source("functions.R")
 source("figure_sourcefile.R")
 set.seed(11600)
 
-n.sim<-1000
-
+#fixed for simulations
+n.sim<-5000
 n.sample_vec<- c(30,30)
-vec_dlt_rate<- c(0.2, 0.45)
-overall_efficacy<- c(0.2, 0.6)
-dlt_efficacy<- c(0.1, 0.4)
 correlation_pro_exp<- -0.6
 correlation_pro_dlt<- 0.5
-vec_exposure_shape<- c(9,9)
-vec_exposure_rate<- c(1,2)
-mat_fact<- matrix(c(0.059, 0.029, 0.265, 0.382, 0.265, 0.059, 0.029, 0.265, 0.382, 0.265), nrow=2, byrow=TRUE) 
-
 exposure_threshold<- 0.8
+
+#vary across simulations 
+mat_dlt_rate<-t(matrix(c(0.27,0.42,0.27,0.27,0.27,0.27,0.2,0.45), nrow=2))
+mat_efficacy_rate<-t(matrix(c(0.38, 0.38, 0.38, 0.60, 0.38, 0.38, 0.2, 0.6), nrow=2))
+mat_dlt_efficacy<-t(matrix(c(0.3, 0.3, 0.3, 0.5, 0.3, 0.3, 0.1, 0.5), nrow=2))
+mat_exposure_shape<- t(matrix(rep(9, times=8), nrow=2))
+mat_exposure_rate<-t(matrix(c(1,2,1,1,1,1,1,2), nrow=2))
+pro_scenario <- list()
+pro_scenario[[1]]<-matrix(c(0.16, 0.23, 0.37, 0.18, 0.07, 0.059, 0.029, 0.265, 0.382, 0.265), nrow=2, byrow=TRUE) 
+pro_scenario[[2]]<-matrix(c(0.059, 0.029, 0.265, 0.382, 0.265, 0.059, 0.029, 0.265, 0.382, 0.265), nrow=2, byrow=TRUE) 
+pro_scenario[[3]]<-matrix(c(0.059, 0.029, 0.265, 0.382, 0.265, 0.059, 0.029, 0.265, 0.382, 0.265), nrow=2, byrow=TRUE) 
+pro_scenario[[4]]<-matrix(c(0.059, 0.029, 0.265, 0.382, 0.265, 0.059, 0.029, 0.265, 0.382, 0.265), nrow=2, byrow=TRUE) 
+fact_score <- abind(pro_scenario, along = 3)
+
+
+
+
+for (i in 1:4){
+vec_dlt_rate<- mat_dlt_rate[i,]
+overall_efficacy<- mat_efficacy_rate[i,]
+dlt_efficacy<- mat_dlt_efficacy[i,]
+vec_exposure_shape<- mat_exposure_shape[i,]
+vec_exposure_rate<- mat_exposure_rate[i,]
+mat_fact<- fact_score[,,i]
+
+sim_input <- list(
+  n.sim,
+  n.sample_vec,
+  correlation_pro_exp,
+  correlation_pro_dlt,
+  exposure_threshold,
+  vec_dlt_rate,
+  overall_efficacy,
+  dlt_efficacy,
+  vec_exposure_shape,
+  vec_exposure_rate,
+  mat_fact
+)
+
+saveRDS(sim_input, file = paste0("sim_results/scenario", i,"/simulation_inputs_scenario",i))
 
 test<-replicate(n.sim,
   analysis(n.sample_vec, vec_dlt_rate, overall_efficacy, dlt_efficacy , correlation_pro_exp, correlation_pro_dlt,
            vec_exposure_shape, vec_exposure_rate, mat_fact,  exposure_threshold),
   simplify = FALSE)
 
-response_priority <- do.call(rbind, lapply(test, `[[`, "response"))
-dlt_priority <- do.call(rbind, lapply(test, `[[`, "dlt"))
-tie_priority <- do.call(rbind, lapply(test, `[[`, "tie"))
+response_priority <-  do.call(rbind, lapply(test, function(x) as.numeric(x[["response"]])))
+dlt_priority <-  do.call(rbind, lapply(test, function(x) as.numeric(x[["dlt"]])))
+tie_priority <-  do.call(rbind, lapply(test, function(x) as.numeric(x[["tie"]])))
+
+colnames(response_priority)<- c("doseA", "doseB", "tie")
+colnames(dlt_priority)<- c("doseA", "doseB", "tie")
+colnames(tie_priority)<- c("doseA", "doseB", "tie")
+
+write.csv(response_priority, file = file.path(paste0("sim_results/scenario", i), paste0("wins_response_priority_scenario", i, ".csv")))
+write.csv(dlt_priority, file = file.path(paste0("sim_results/scenario", i), paste0("wins_dlt_priority_scenario", i, ".csv")))
+write.csv(tie_priority, file = file.path(paste0("sim_results/scenario", i), paste0("wins_tie_priority_scenario", i, ".csv")))
 
 wr_response_priority<-sapply(1:n.sim, function (k) response_priority[k,1]/response_priority[k,2])
 wr_dlt_priority<-sapply(1:n.sim, function (k) dlt_priority[k,1]/dlt_priority[k,2])
 wr_tie_priority<-sapply(1:n.sim, function (k) tie_priority[k,1]/tie_priority[k,2])
 
-
+wr<-cbind(wr_response_priority,wr_dlt_priority,wr_tie_priority)
+write.csv(wr, file = file.path(paste0("sim_results/scenario", i), paste0("wr_scenario", i, ".csv")))
 
 #######CREATE FIGURE ########
 df <- bind_rows(
@@ -73,9 +115,9 @@ df_sum <- data.frame(
   prob_inten = round(c(1-pbeta(0.8, vec_exposure_shape[1], vec_exposure_rate[1]),
                                            1-pbeta(0.8, vec_exposure_shape[2], vec_exposure_rate[2])),2),
   exp_fact = round(c(sum(mat_fact[1,]*(1:5)), sum(mat_fact[2,]*(1:5))),2),
-  dlt = c(empirical$prob_dose_a[1], 1-empirical$prob_dose_a[1]),
-  tie = c(empirical$prob_dose_a[3], 1-empirical$prob_dose_a[3]),
-  response = c(empirical$prob_dose_a[2], 1-empirical$prob_dose_a[2])
+  dlt = round(c(empirical$prob_dose_a[1], 1-empirical$prob_dose_a[1]),2),
+  tie = round(c(empirical$prob_dose_a[3], 1-empirical$prob_dose_a[3]),2),
+  response = round(c(empirical$prob_dose_a[2], 1-empirical$prob_dose_a[2]),2)
 )
 
 
@@ -96,9 +138,9 @@ lwd_matrix <- matrix(1, nrow = 7, ncol = 2)
 lwd_matrix[5:7, ] <- 4
 
 fontface_matrix <- matrix("plain", nrow = 7, ncol = 2)
-for (i in 5:7) {
-  j <- which.max(df_sum_tidy[i, -1])  # column with largest value
-  fontface_matrix[i, j] <- "bold"
+for (k in 5:7) {
+  j <- which.max(df_sum_tidy[k, -1])  # column with largest value
+  fontface_matrix[k, j] <- "bold"
 }
 
 blue_theme <- ttheme_default(
@@ -118,6 +160,10 @@ table1 <- tableGrob(df_sum_tidy[,-1], rows = c("(1) DLT rate", "(2) Response rat
 
 p <- ggplot() + xlim(0, 4) + ylim(0, 4) + theme_void()
 fig2<- p + annotation_custom(table1, xmin = 0, xmax = 4, ymin = 0, ymax = 4)
-#pdf("scenario4_diff.pdf", width=15, height=5)
-plot_grid(fig2, density, ncol = 2, rel_widths = c(1, 1.5))  
-#dev.off()
+pdf(file.path(paste0("sim_results/scenario", i), paste0("plot_scenario", i, ".pdf")), width=15, height=5)
+tryCatch({
+print(plot_grid(fig2, density, ncol = 2, rel_widths = c(1, 1.5)))  
+}, finally = {
+  dev.off()
+})
+}

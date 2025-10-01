@@ -11,7 +11,7 @@ correlation_pro_dlt<- 0.5
 exposure_threshold<- 0.8
 
 #vary across simulations 
-mat_dlt_rate<-t(matrix(c(0.27,0.42,0.27,0.27,0.2,0.45, 0.27, 0.27), nrow=2))
+mat_dlt_rate<-t(matrix(c(0.27,0.42,0.27,0.35,0.2,0.45, 0.27, 0.27), nrow=2))
 mat_efficacy_rate<-t(matrix(c(0.38, 0.38, 0.38, 0.60, 0.2, 0.6, 0.38, 0.38), nrow=2))
 mat_dlt_efficacy<-t(matrix(c(0.3, 0.3, 0.3, 0.5, 0.1, 0.5, 0.3, 0.3), nrow=2))
 mat_exposure_shape<- t(matrix(rep(9, times=8), nrow=2))

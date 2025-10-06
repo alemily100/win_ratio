@@ -155,7 +155,7 @@ for (i in 1:4){
     )
   )
   
-  table1 <- tableGrob(df_sum_tidy[,-1], rows = c("(1) DLT rate", "(2) Response rate", "(3a) Sufficient intensity rate", "(3b) Expected symptom bother", expression(atop(bold("Rank prioritising DLTs:"), "Probability dose selected `best`:")),
+  table1 <- tableGrob(df_sum_tidy[,-1], rows = c("(1) DLT rate", "(2) Response rate", "(3a) Sufficient dose intensity rate", "(3b) Expected symptom bother", expression(atop(bold("Rank prioritising DLTs:"), "Probability dose selected `best`:")),
                                                  expression(atop(bold("Rank with intermediate ties:"), "Probability dose selected `best`:")), expression(atop(bold("Rank prioritising response:"), "Probability dose selected `best`:"))),theme = blue_theme)
   
   p <- ggplot() + xlim(0, 4) + ylim(0, 4) + theme_void()

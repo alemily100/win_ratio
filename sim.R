@@ -8,12 +8,12 @@ n.sim<-5000
 n.sample_vec<- c(30,30)
 correlation_pro_exp<- -0.6
 correlation_pro_dlt<- 0.5
+correlation_dlt_eff<- 0.1
 exposure_threshold<- 0.8
 
 #vary across simulations 
 mat_dlt_rate<-t(matrix(c(0.27,0.42,0.27,0.35,0.2,0.45, 0.27, 0.27), nrow=2))
 mat_efficacy_rate<-t(matrix(c(0.38, 0.38, 0.38, 0.60, 0.2, 0.6, 0.38, 0.38), nrow=2))
-mat_dlt_efficacy<-t(matrix(c(0.3, 0.3, 0.3, 0.5, 0.1, 0.5, 0.3, 0.3), nrow=2))
 mat_exposure_shape<- t(matrix(rep(9, times=8), nrow=2))
 mat_exposure_rate<-t(matrix(c(1,2,1,1,1,2,1,2), nrow=2))
 pro_scenario <- list()
@@ -28,8 +28,7 @@ fact_score <- abind(pro_scenario, along = 3)
 
 for (i in 1:4){
   vec_dlt_rate<- mat_dlt_rate[i,]
-  overall_efficacy<- mat_efficacy_rate[i,]
-  dlt_efficacy<- mat_dlt_efficacy[i,]
+  vec_efficacy_rate<- mat_efficacy_rate[i,]
   vec_exposure_shape<- mat_exposure_shape[i,]
   vec_exposure_rate<- mat_exposure_rate[i,]
   mat_fact<- fact_score[,,i]
@@ -39,10 +38,10 @@ for (i in 1:4){
     n.sample_vec,
     correlation_pro_exp,
     correlation_pro_dlt,
+    correlation_dlt_eff,
     exposure_threshold,
     vec_dlt_rate,
-    overall_efficacy,
-    dlt_efficacy,
+    vec_efficacy_rate,
     vec_exposure_shape,
     vec_exposure_rate,
     mat_fact
@@ -51,7 +50,7 @@ for (i in 1:4){
   #saveRDS(sim_input, file = paste0("sim_results/scenario", i,"/simulation_inputs_scenario",i))
   
   test<-replicate(n.sim,
-                  analysis(n.sample_vec, vec_dlt_rate, overall_efficacy, dlt_efficacy , correlation_pro_exp, correlation_pro_dlt,
+                  analysis(n.sample_vec, vec_dlt_rate, vec_efficacy_rate, correlation_pro_exp, correlation_pro_dlt, correlation_dlt_eff,
                            vec_exposure_shape, vec_exposure_rate, mat_fact,  exposure_threshold),
                   simplify = FALSE)
   
@@ -111,7 +110,7 @@ for (i in 1:4){
   df_sum <- data.frame(
     dose = c("Dose A", "Dose B"),
     prob_no_DLT = round(vec_dlt_rate,2),
-    prob_response = round(overall_efficacy,2),
+    prob_response = round(vec_efficacy_rate,2),
     prob_inten = round(c(1-pbeta(0.8, vec_exposure_shape[1], vec_exposure_rate[1]),
                          1-pbeta(0.8, vec_exposure_shape[2], vec_exposure_rate[2])),2),
     exp_fact = round(c(sum(mat_fact[1,]*(1:5)), sum(mat_fact[2,]*(1:5))),2),
@@ -179,6 +178,8 @@ for (i in 1:4){
   assign(paste0("figure", i), fig)
 }
 
-pdf(file.path(paste0("figures"), paste0("simulation_figure.pdf")), width=10, height=18)
+pdf(file.path(paste0("figures"), paste0("simulation_figure_corr0.7.pdf")), width=10, height=18)
 print(plot_grid(figure1, figure2, figure3, figure4, ncol = 1))
 dev.off()
+
+
